@@ -40,6 +40,8 @@ func MessageCreatedHandler(message Message) error {
 	respMessage.MessageType = "outgoing"
 	respMessage.ContentType = "text"
 	respMessage.Private = false
+	respMessage.Account.ID = message.Account.ID
+	respMessage.Conversation.ID = message.Conversation.ID
 
 	fmt.Println("sending text message")
 

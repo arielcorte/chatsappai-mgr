@@ -31,7 +31,6 @@ type User struct {
 
 // Conversation represents the payload structure for a conversation.
 type Conversation struct {
-	Event                string `json:"event"`
 	AdditionalAttributes struct {
 		Browser struct {
 			DeviceName      string `json:"device_name"`
@@ -73,31 +72,29 @@ type Conversation struct {
 
 // Message represents the payload structure for a message.
 type Message struct {
-	Event             string      `json:"event"`
-	ID                int         `json:"id"`
-	Content           string      `json:"content"`
-	MessageType       string      `json:"message_type"`
-	CreatedAt         int64       `json:"created_at"`
-	Private           bool        `json:"private"`
-	SourceID          string      `json:"source_id"`
-	ContentType       string      `json:"content_type"`
-	ContentAttributes interface{} `json:"content_attributes"`
-	Sender            struct {
-		Type    string  `json:"type"`
-		User    User    `json:"user,omitempty"`
-		Contact Contact `json:"contact,omitempty"`
-	} `json:"sender"`
-	Account      Account      `json:"account"`
-	Conversation Conversation `json:"conversation"`
-	Inbox        Inbox        `json:"inbox"`
+	ID          int    `json:"id"`
+	Content     string `json:"content"`
+	MessageType string `json:"message_type"`
+	ContentType string `json:"content_type"`
+	Private     bool   `json:"private"`
+	Account     struct {
+		ID int `json:"id"`
+	} `json:"account"`
+	Conversation struct {
+		ID int `json:"id"`
+	} `json:"conversation"`
+}
+
+type MessageID struct {
+	ID int `json:"id"`
 }
 
 // WebhookEvent represents a generic webhook event.
-type WebhookEvent interface {
+type WebhookEvent struct {
+	Event string `json:"event"`
 }
 
 type ConversationUpdatedEvent struct {
-	Event             string `json:"event"`
 	ChangedAttributes []map[string]struct {
 		CurrentValue  string `json:"current_value"`
 		PreviousValue string `json:"previous_value"`
@@ -106,7 +103,6 @@ type ConversationUpdatedEvent struct {
 }
 
 type WebwidgetTriggeredEvent struct {
-	Event               string       `json:"event"`
 	ID                  int          `json:"id"`
 	Contact             Contact      `json:"contact"`
 	Inbox               Inbox        `json:"inbox"`
@@ -129,3 +125,6 @@ type WebwidgetTriggeredEvent struct {
 		} `json:"browser"`
 	} `json:"event_info"`
 }
+
+// WebhookPayload represents the payload structure for a message_created webhook.
+// {"account":{"id":1,"name":"ChatsappAI.com"},"additional_attributes":{},"content_attributes":{},"content_type":"text","content":"test","conversation":{"additional_attributes":{},"can_reply":true,"channel":"Channel::Whatsapp","contact_inbox":{"id":84,"contact_id":89,"inbox_id":10,"source_id":"5493513055609","created_at":"2023-09-28T06:23:46.462Z","updated_at":"2023-09-28T06:23:46.462Z","hmac_verified":false,"pubsub_token":"e3nzQ74DmyT7qSH6WgcpBLm5"},"id":12,"inbox_id":10,"messages":[{"id":1646,"content":"test","account_id":1,"inbox_id":10,"conversation_id":12,"message_type":0,"created_at":1696014860,"updated_at":"2023-09-29T19:14:20.162Z","private":false,"status":"sent","source_id":"wamid.HBgNNTQ5MzUxMzA1NTYwORUCABIYIEI1MTgwMjQwMTkzN0YyMzBGMTEzQUY4MkYyRjJFRTJBAA==","content_type":"text","content_attributes":{},"sender_type":"Contact","sender_id":89,"external_source_ids":{},"additional_attributes":{},"processed_message_content":"test","sentiment":{},"conversation":{"assignee_id":3,"unread_count":1,"last_activity_at":1696014860,"contact_inbox":{"source_id":"5493513055609"}},"sender":{"additional_attributes":{},"custom_attributes":{},"email":null,"id":89,"identifier":null,"name":"Ariel Corte","phone_number":"+5493513055609","thumbnail":"","type":"contact"}}],"labels":[],"meta":{"sender":{"additional_attributes":{},"custom_attributes":{},"email":null,"id":89,"identifier":null,"name":"Ariel Corte","phone_number":"+5493513055609","thumbnail":"","type":"contact"},"assignee":{"id":3,"name":"Ariel Corte","available_name":"Ariel (Tecnichal Staff)","avatar_url":"https://app.chatsappai.com/rails/active_storage/representations/redirect/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBDdz09IiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--3f3bd5ba433dd789761c51a0ac6288b5e35e8d8a/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdCem9MWm05eWJXRjBTU0lJYW5CbkJqb0dSVlE2RTNKbGMybDZaVjkwYjE5bWFXeHNXd2RwQWZvdyIsImV4cCI6bnVsbCwicHVyIjoidmFyaWF0aW9uIn19--f591e7a4b8661c5e78b1e49f0b4fffe1eafb2258/arielprofile.jpg","type":"user","availability_status":null,"thumbnail":"https://app.chatsappai.com/rails/active_storage/representations/redirect/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBDdz09IiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--3f3bd5ba433dd789761c51a0ac6288b5e35e8d8a/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdCem9MWm05eWJXRjBTU0lJYW5CbkJqb0dSVlE2RTNKbGMybDZaVjkwYjE5bWFXeHNXd2RwQWZvdyIsImV4cCI6bnVsbCwicHVyIjoidmFyaWF0aW9uIn19--f591e7a4b8661c5e78b1e49f0b4fffe1eafb2258/arielprofile.jpg"},"team":null,"hmac_verified":false},"status":"open","custom_attributes":{},"snoozed_until":null,"unread_count":1,"first_reply_created_at":"2023-09-28T08:26:30.978Z","priority":null,"waiting_since":1696013510,"agent_last_seen_at":1696014734,"contact_last_seen_at":0,"timestamp":1696014860,"created_at":1695882226},"created_at":"2023-09-29T19:14:20.162Z","id":1646,"inbox":{"id":10,"name":"test"},"message_type":"incoming","private":false,"sender":{"account":{"id":1,"name":"ChatsappAI.com"},"additional_attributes":{},"avatar":"","custom_attributes":{},"email":null,"id":89,"identifier":null,"name":"Ariel Corte","phone_number":"+5493513055609","thumbnail":""},"source_id":"wamid.HBgNNTQ5MzUxMzA1NTYwORUCABIYIEI1MTgwMjQwMTkzN0YyMzBGMTEzQUY4MkYyRjJFRTJBAA==","event":"message_created"}

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -11,56 +13,47 @@ import (
 func WebhookHandler(c *gin.Context) {
 	var webhookEvent WebhookEvent
 
-	fmt.Println(webhookEvent)
-
-	if err := c.BindJSON(&webhookEvent); err != nil {
+	raw, err := c.GetRawData()
+	if err != nil {
+		fmt.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	fmt.Println(webhookEvent)
+	var buf bytes.Buffer
 
-	switch webhookEvent.(type) {
+	if err := json.Compact(&buf, raw); err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	case Message:
+	data := buf.Bytes()
+
+	if err := json.Unmarshal(data, &webhookEvent); err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	switch webhookEvent.Event {
+
+	case "message_created":
+
 		var message Message
-		if err := c.BindJSON(&message); err != nil {
+		if err := json.Unmarshal(data, &message); err != nil {
+			fmt.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		fmt.Println("message received", message.Content)
 
-		fmt.Println(message)
-
-		//if err := MessageCreatedHandler(message); err != nil {
-		//	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		//	return
-		//}
-
-		var sendMessage Message = Message{
-			Content:     "Hello",
-			MessageType: "outgoing",
-			ContentType: "text",
-			Private:     false,
-			Account: Account{
-				ID: 1,
-			},
-			Conversation: Conversation{
-				ID: 7,
-			},
+		if err := MessageCreatedHandler(message); err != nil {
+			fmt.Println(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
-		resp, err := SendTextMessage(sendMessage)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Error sending message"})
-			return
-		}
-
-	case Conversation:
+	case "conversation_created":
 		var conversation Conversation
 		if err := c.BindJSON(&conversation); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -89,10 +82,14 @@ func SendTestHandler(c *gin.Context) {
 		MessageType: "outgoing",
 		ContentType: "text",
 		Private:     false,
-		Account: Account{
+		Account: struct {
+			ID int `json:"id"`
+		}{
 			ID: accountID,
 		},
-		Conversation: Conversation{
+		Conversation: struct {
+			ID int `json:"id"`
+		}{
 			ID: conversationID,
 		},
 	}
