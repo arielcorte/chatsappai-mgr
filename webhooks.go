@@ -82,19 +82,34 @@ func SendTestHandler(c *gin.Context) {
 		MessageType: "outgoing",
 		ContentType: "text",
 		Private:     false,
-		Account: struct {
-			ID int `json:"id"`
-		}{
+		Account: Account{
 			ID: accountID,
 		},
-		Conversation: struct {
-			ID int `json:"id"`
-		}{
+		Conversation: Conversation{
 			ID: conversationID,
 		},
 	}
 
 	resp, err := SendTextMessage(sendMessage)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		c.JSON(http.StatusBadRequest, gin.H{"error": resp.Status})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func AssingConversationHandler(c *gin.Context) {
+	accountID := "1"
+	conversationID := "16"
+	assigneeID := 3
+
+	resp, err := AssignConversationToAnAgent(accountID, conversationID, assigneeID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

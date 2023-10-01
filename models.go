@@ -57,8 +57,7 @@ type Conversation struct {
 		UpdatedAt    string `json:"updated_at"`
 		HMACVerified bool   `json:"hmac_verified"`
 	} `json:"contact_inbox"`
-	Messages []Message `json:"messages"`
-	Meta     struct {
+	Meta struct {
 		Sender   Contact `json:"sender"`
 		Assignee User    `json:"assignee"`
 	} `json:"meta"`
@@ -68,21 +67,18 @@ type Conversation struct {
 	ContactLastSeenAt int64  `json:"contact_last_seen_at"`
 	Timestamp         int64  `json:"timestamp"`
 	AccountID         int    `json:"account_id"`
+	AssigneeID        int    `json:"assignee_id"`
 }
 
 // Message represents the payload structure for a message.
 type Message struct {
-	ID          int    `json:"id"`
-	Content     string `json:"content"`
-	MessageType string `json:"message_type"`
-	ContentType string `json:"content_type"`
-	Private     bool   `json:"private"`
-	Account     struct {
-		ID int `json:"id"`
-	} `json:"account"`
-	Conversation struct {
-		ID int `json:"id"`
-	} `json:"conversation"`
+	ID           int          `json:"id"`
+	Content      string       `json:"content"`
+	MessageType  string       `json:"message_type"`
+	ContentType  string       `json:"content_type"`
+	Private      bool         `json:"private"`
+	Account      Account      `json:"account"`
+	Conversation Conversation `json:"conversation"`
 }
 
 type MessageID struct {

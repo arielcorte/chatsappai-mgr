@@ -10,5 +10,5 @@ func CreateURLMappings() {
 	Engine.POST("/webhooks", WebhookHandler)
 
 	Engine.POST("/send-test", SendTestHandler)
-
+	Engine.POST("/assign-conversation", AssingConversationHandler)
 }

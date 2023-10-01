@@ -22,11 +22,42 @@ func MessageCreatedHandler(message Message) error {
 	if message.MessageType == "outgoing" {
 		return nil
 	}
+	if message.Conversation.AssigneeID != 0 {
+		return nil
+	}
+	if message.Conversation.Status == "open" {
+		return nil
+	}
 
-	//TODO: get if conversation is manual
-	var isManual bool = false
+	if message.Content == "/assign" {
+		// assign to agent
+		resp, err := OpenConversation(strconv.Itoa(message.Account.ID), strconv.Itoa(message.Conversation.ID))
+		if err != nil {
+			return err
+		}
 
-	if isManual {
+		if resp.StatusCode != http.StatusOK {
+			fmt.Println("Error opening conversation", resp)
+			return errors.New("Error assigning conversation to agent")
+		}
+
+		var respMessage Message
+		respMessage.MessageType = "outgoing"
+		respMessage.ContentType = "text"
+		respMessage.Private = false
+		respMessage.Account.ID = message.Account.ID
+		respMessage.Conversation.ID = message.Conversation.ID
+		respMessage.Content = "Tu conversación ha sido asignada a un agente.\n\nEn la brevedad se contactarán contigo para ayudarte.\n\nMuchas Gracias 😊"
+
+		respMsg, err := SendTextMessage(respMessage)
+		if err != nil {
+			return err
+		}
+
+		if respMsg.StatusCode != http.StatusOK {
+			return errors.New("Error sending message")
+		}
+
 		return nil
 	}
 
@@ -79,11 +110,77 @@ func SendTextMessage(message Message) (http.Response, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Add("api_access_token", os.Getenv("BOT_ACCESS_TOKEN"))
+
+	resp, err := HTTPClient.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return http.Response{StatusCode: http.StatusInternalServerError}, err
+	}
+
+	defer resp.Body.Close()
+
+	return *resp, nil
+}
+
+func AssignConversationToAnAgent(accountID string, conversationID string, agentID int) (http.Response, error) {
+
+	body := map[string]int{
+		"assignee_id": agentID,
+	}
+
+	payloadBuf := new(bytes.Buffer)
+	if err := json.NewEncoder(payloadBuf).Encode(body); err != nil {
+		fmt.Println(err)
+		return http.Response{StatusCode: http.StatusBadRequest}, err
+	}
+
+	req, err := http.NewRequest("POST", os.Getenv("CHATWOOT_HOST")+"/api/v1/accounts/"+accountID+"/conversations/"+conversationID+"/assignments", bytes.NewBuffer(payloadBuf.Bytes()))
+	if err != nil {
+		fmt.Println(err)
+		return http.Response{StatusCode: http.StatusBadRequest}, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("api_access_token", os.Getenv("API_ACCESS_TOKEN"))
 
 	resp, err := HTTPClient.Do(req)
 	if err != nil {
 		fmt.Println(err)
+		return http.Response{StatusCode: http.StatusInternalServerError}, err
+	}
+
+	defer resp.Body.Close()
+
+	return *resp, nil
+}
+
+func OpenConversation(accountID string, conversationID string) (http.Response, error) {
+	fmt.Println(accountID, conversationID)
+
+	body := map[string]string{
+		"status": "open",
+	}
+
+	payloadBuf := new(bytes.Buffer)
+	if err := json.NewEncoder(payloadBuf).Encode(body); err != nil {
+		fmt.Println(err)
+		return http.Response{StatusCode: http.StatusBadRequest}, err
+	}
+
+	req, err := http.NewRequest("POST", os.Getenv("CHATWOOT_HOST")+"/api/v1/accounts/"+accountID+"/conversations/"+conversationID+"/toggle_status", bytes.NewBuffer(payloadBuf.Bytes()))
+	if err != nil {
+		fmt.Println(err)
+		return http.Response{StatusCode: http.StatusBadRequest}, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Add("api_access_token", os.Getenv("BOT_ACCESS_TOKEN"))
+
+	fmt.Println("sending request to open conversation")
+
+	resp, err := HTTPClient.Do(req)
+	if err != nil {
 		return http.Response{StatusCode: http.StatusInternalServerError}, err
 	}
 
