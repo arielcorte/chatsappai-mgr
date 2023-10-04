@@ -48,7 +48,7 @@ func WebhookHandler(c *gin.Context) {
 		}
 		fmt.Println("message received", message.Content)
 
-		if err := MessageCreatedHandler(message); err != nil {
+		if err := MessageCreatedHandler(message, c.Query("furl"), c.Query("fbear")); err != nil {
 			fmt.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}

@@ -12,7 +12,7 @@ import (
 
 var HTTPClient = &http.Client{}
 
-func MessageCreatedHandler(message Message) error {
+func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string) error {
 	if message.Content == "" {
 		return nil
 	}
@@ -29,7 +29,14 @@ func MessageCreatedHandler(message Message) error {
 		return nil
 	}
 
-	if message.Content == "/assign" {
+	intent, err := PredictIntentionFlowise(message.Content)
+	if err != nil {
+		return err
+	}
+
+	if message.Content == "/assign" || intent == "int_compra" || intent == "int_soporte" || intent == "int_devolucion" {
+
+		//if message.Content == "/assign" {
 		// assign to agent
 		resp, err := OpenConversation(strconv.Itoa(message.Account.ID), strconv.Itoa(message.Conversation.ID))
 		if err != nil {
@@ -61,7 +68,7 @@ func MessageCreatedHandler(message Message) error {
 		return nil
 	}
 
-	iaResp, err := QueryFlowise(message.Content)
+	iaResp, err := QueryFlowise(message.Content, flowiseApi, flowiseKey)
 	if err != nil {
 		return err
 	}
