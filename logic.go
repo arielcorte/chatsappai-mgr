@@ -195,3 +195,7 @@ func OpenConversation(accountID string, conversationID string) (http.Response, e
 
 	return *resp, nil
 }
+
+func ReturnHelloWorld() string {
+	return "Hello World"
+}
