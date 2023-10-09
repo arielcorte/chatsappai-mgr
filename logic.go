@@ -33,6 +33,7 @@ func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string
 	if err != nil {
 		return err
 	}
+	fmt.Println("intent", intent)
 
 	agentBots, err := ListAgentBots(strconv.Itoa(message.Account.ID))
 	if err != nil {
@@ -225,8 +226,6 @@ func ListAgentBots(accountID string) ([]AgentBot, error) {
 	}
 
 	defer resp.Body.Close()
-
-	fmt.Println(resp)
 
 	var agentBots []AgentBot
 	if err := json.NewDecoder(resp.Body).Decode(&agentBots); err != nil {

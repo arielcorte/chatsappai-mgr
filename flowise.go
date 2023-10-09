@@ -60,26 +60,14 @@ func QueryFlowise(query string, flowiseApi string, flowiseKey string) (string, e
 
 func PredictIntentionFlowise(query string) (string, error) {
 	flowiseApi := os.Getenv("FLOWISE_INTENT_API")
-	flowiseKey := os.Getenv("FLOWISE_INTENT_KEY")
-
-	type ApiConfig struct {
-		ConversationHistory []string `json:"conversation_history"`
-		Message             string   `json:"message"`
-		Model               string   `json:"model"`
-	}
+	//flowiseKey := os.Getenv("FLOWISE_INTENT_KEY")
 
 	type PredictionQuery struct {
-		Question  string    `json:"question"`
-		ApiConfig ApiConfig `json:"apiConfig"`
+		Question string `json:"question"`
 	}
 
 	body := &PredictionQuery{
 		Question: query,
-		ApiConfig: ApiConfig{
-			ConversationHistory: []string{},
-			Message:             query,
-			Model:               "GPT-4",
-		},
 	}
 
 	payloadBuf := new(bytes.Buffer)
@@ -96,7 +84,7 @@ func PredictIntentionFlowise(query string) (string, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Add("Authorization", flowiseKey)
+	//req.Header.Add("Authorization", flowiseKey)
 
 	resp, err := HTTPClient.Do(req)
 	if err != nil {
