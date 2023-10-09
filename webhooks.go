@@ -76,6 +76,7 @@ func SendTestHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	accessToken := c.Query("access_token")
 
 	var sendMessage Message = Message{
 		Content:     "Hello, test message sent",
@@ -90,7 +91,7 @@ func SendTestHandler(c *gin.Context) {
 		},
 	}
 
-	resp, err := SendTextMessage(sendMessage)
+	resp, err := SendTextMessage(sendMessage, accessToken)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

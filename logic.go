@@ -34,11 +34,21 @@ func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string
 		return err
 	}
 
+	agentBots, err := ListAgentBots(strconv.Itoa(message.Account.ID))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	if len(agentBots) == 0 {
+		fmt.Println("No agent bots found")
+		return errors.New("No agent bots found")
+	}
+
 	if message.Content == "/assign" || intent == "int_compra" || intent == "int_soporte" || intent == "int_devolucion" {
 
-		//if message.Content == "/assign" {
 		// assign to agent
-		resp, err := OpenConversation(strconv.Itoa(message.Account.ID), strconv.Itoa(message.Conversation.ID))
+		resp, err := OpenConversation(strconv.Itoa(message.Account.ID), strconv.Itoa(message.Conversation.ID), agentBots[0].AccessToken)
 		if err != nil {
 			return err
 		}
@@ -56,7 +66,7 @@ func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string
 		respMessage.Conversation.ID = message.Conversation.ID
 		respMessage.Content = "Tu conversación ha sido asignada a un agente.\n\nEn la brevedad se contactarán contigo para ayudarte.\n\nMuchas Gracias 😊"
 
-		respMsg, err := SendTextMessage(respMessage)
+		respMsg, err := SendTextMessage(respMessage, agentBots[0].AccessToken)
 		if err != nil {
 			return err
 		}
@@ -83,7 +93,7 @@ func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string
 
 	fmt.Println("sending text message")
 
-	resp, err := SendTextMessage(respMessage)
+	resp, err := SendTextMessage(respMessage, agentBots[0].AccessToken)
 	if err != nil {
 		return err
 	}
@@ -96,7 +106,7 @@ func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string
 	return nil
 }
 
-func SendTextMessage(message Message) (http.Response, error) {
+func SendTextMessage(message Message, agentBotToken string) (http.Response, error) {
 	var strAccID string = strconv.Itoa(message.Account.ID)
 	var strConvID string = strconv.Itoa(message.Conversation.ID)
 	var url string = os.Getenv("CHATWOOT_HOST") + "/api/v1/accounts/" + strAccID + "/conversations/" + strConvID + "/messages"
@@ -117,7 +127,7 @@ func SendTextMessage(message Message) (http.Response, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Add("api_access_token", os.Getenv("BOT_ACCESS_TOKEN"))
+	req.Header.Add("api_access_token", agentBotToken)
 
 	resp, err := HTTPClient.Do(req)
 	if err != nil {
@@ -162,7 +172,7 @@ func AssignConversationToAnAgent(accountID string, conversationID string, agentI
 	return *resp, nil
 }
 
-func OpenConversation(accountID string, conversationID string) (http.Response, error) {
+func OpenConversation(accountID string, conversationID string, agentBotToken string) (http.Response, error) {
 	fmt.Println(accountID, conversationID)
 
 	body := map[string]string{
@@ -182,7 +192,7 @@ func OpenConversation(accountID string, conversationID string) (http.Response, e
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Add("api_access_token", os.Getenv("BOT_ACCESS_TOKEN"))
+	req.Header.Add("api_access_token", agentBotToken)
 
 	fmt.Println("sending request to open conversation")
 
@@ -198,4 +208,31 @@ func OpenConversation(accountID string, conversationID string) (http.Response, e
 
 func ReturnHelloWorld() string {
 	return "Hello World"
+}
+
+func ListAgentBots(accountID string) ([]AgentBot, error) {
+	req, err := http.NewRequest("GET", os.Getenv("CHATWOOT_HOST")+"/api/v1/accounts/"+accountID+"/agent_bots", nil)
+	if err != nil {
+		return []AgentBot{}, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Add("api_access_token", os.Getenv("API_ACCESS_TOKEN"))
+
+	resp, err := HTTPClient.Do(req)
+	if err != nil {
+		return []AgentBot{}, err
+	}
+
+	defer resp.Body.Close()
+
+	fmt.Println(resp)
+
+	var agentBots []AgentBot
+	if err := json.NewDecoder(resp.Body).Decode(&agentBots); err != nil {
+		return []AgentBot{}, err
+	}
+
+	return agentBots, nil
+
 }
