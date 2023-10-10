@@ -19,7 +19,7 @@ func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string
 	if message.ContentType != "text" {
 		return nil
 	}
-	if message.MessageType == "outgoing" {
+	if message.MessageType != "incoming" {
 		return nil
 	}
 	if message.Conversation.AssigneeID != 0 {
