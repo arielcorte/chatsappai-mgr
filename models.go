@@ -79,6 +79,8 @@ type Message struct {
 	Private      bool         `json:"private"`
 	Account      Account      `json:"account"`
 	Conversation Conversation `json:"conversation"`
+	Sender       Contact      `json:"sender"`
+	Inbox        Inbox        `json:"inbox"`
 }
 
 type MessageID struct {

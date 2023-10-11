@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func QueryFlowise(query string, flowiseApi string, flowiseKey string) (string, error) {
+func QueryFlowise(query string, author string, destinatary string, flowiseApi string, flowiseKey string) (string, error) {
 	//flowiseApi := os.Getenv("FLOWISE_API")
 	//flowiseKey := os.Getenv("FLOWISE_KEY")
 
@@ -19,7 +19,7 @@ func QueryFlowise(query string, flowiseApi string, flowiseKey string) (string, e
 	}
 
 	body := &FlowiseQuery{
-		Question: query,
+		Question: "Nuevo mensaje de " + author + " para " + destinatary + ": '" + query + "'",
 	}
 
 	payloadBuf := new(bytes.Buffer)

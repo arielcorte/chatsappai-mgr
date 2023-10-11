@@ -79,7 +79,7 @@ func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string
 		return nil
 	}
 
-	iaResp, err := QueryFlowise(message.Content, flowiseApi, flowiseKey)
+	iaResp, err := QueryFlowise(message.Content, strconv.Itoa(message.Sender.ID), message.Inbox.Name, flowiseApi, flowiseKey)
 	if err != nil {
 		return err
 	}
