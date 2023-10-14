@@ -40,7 +40,7 @@ func WebhookHandler(c *gin.Context) {
 
 	case "message_created":
 
-		var message Message
+		var message MessageCreatedEvent
 		if err := json.Unmarshal(data, &message); err != nil {
 			fmt.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -51,13 +51,6 @@ func WebhookHandler(c *gin.Context) {
 		if err := MessageCreatedHandler(message, c.Query("furl"), c.Query("fbear")); err != nil {
 			fmt.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		}
-
-	case "conversation_created":
-		var conversation Conversation
-		if err := c.BindJSON(&conversation); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
 		}
 	}
 
@@ -78,15 +71,15 @@ func SendTestHandler(c *gin.Context) {
 	}
 	accessToken := c.Query("access_token")
 
-	var sendMessage Message = Message{
+	var sendMessage MessageCreatedEvent = MessageCreatedEvent{
 		Content:     "Hello, test message sent",
 		MessageType: "outgoing",
 		ContentType: "text",
 		Private:     false,
-		Account: Account{
+		Account: MC_Account{
 			ID: accountID,
 		},
-		Conversation: Conversation{
+		Conversation: MC_Conversation{
 			ID: conversationID,
 		},
 	}
