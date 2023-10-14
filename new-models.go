@@ -11,8 +11,8 @@ type ConversationStatusChangedEvent struct {
 	CanReply             bool             `json:"can_reply"`
 	Channel              string           `json:"channel"`
 	ContactInbox         CSC_ContactInbox `json:"contact_inbox"`
-	Id                   int              `json:"id"`
-	InboxId              int              `json:"inbox_id"`
+	ID                   int              `json:"id"`
+	InboxID              int              `json:"inbox_id"`
 	Messages             []CSC_Message    `json:"messages"`
 	Labels               []struct{}       `json:"labels"`
 	Meta                 CSC_Meta         `json:"meta"`
@@ -32,10 +32,10 @@ type ConversationStatusChangedEvent struct {
 }
 
 type CSC_ContactInbox struct {
-	Id           int    `json:"id"`
-	ContactId    int    `json:"contact_id"`
-	InboxId      int    `json:"inbox_id"`
-	SourceId     string `json:"source_id"`
+	ID           int    `json:"id"`
+	ContactID    int    `json:"contact_id"`
+	InboxID      int    `json:"inbox_id"`
+	SourceID     string `json:"source_id"`
 	CreatedAt    string `json:"created_at"`
 	UpdatedAt    string `json:"updated_at"`
 	HmacVerified bool   `json:"hmac_verified"`
@@ -43,22 +43,22 @@ type CSC_ContactInbox struct {
 }
 
 type CSC_Message struct {
-	Id                      int                      `json:"id"`
+	ID                      int                      `json:"id"`
 	Content                 string                   `json:"content"`
-	AccountId               int                      `json:"account_id"`
-	InboxId                 int                      `json:"inbox_id"`
-	ConversationId          int                      `json:"conversation_id"`
+	AccountID               int                      `json:"account_id"`
+	InboxID                 int                      `json:"inbox_id"`
+	ConversationID          int                      `json:"conversation_id"`
 	MessageType             int                      `json:"message_type"`
 	CreatedAt               int                      `json:"created_at"`
 	UpdatedAt               string                   `json:"updated_at"`
 	Private                 bool                     `json:"private"`
 	Status                  string                   `json:"status"`
-	SourceId                string                   `json:"source_id"`
+	SourceID                string                   `json:"source_id"`
 	ContentType             string                   `json:"content_type"`
 	ContentAttributes       struct{}                 `json:"content_attributes"`
 	SenderType              string                   `json:"sender_type"`
-	SenderId                int                      `json:"sender_id"`
-	ExternalSourceIds       struct{}                 `json:"external_source_ids"`
+	SenderID                int                      `json:"sender_id"`
+	ExternalSourceIDs       struct{}                 `json:"external_source_ids"`
 	AdditionalAttributes    struct{}                 `json:"additional_attributes"`
 	ProcessedMessageContent string                   `json:"processed_message_content"`
 	Sentiment               struct{}                 `json:"sentiment"`
@@ -67,14 +67,14 @@ type CSC_Message struct {
 }
 
 type CSC_Message_Conversation struct {
-	AssigneeId     int              `json:"assignee_id"`
+	AssigneeID     int              `json:"assignee_id"`
 	UnreadCount    int              `json:"unread_count"`
 	LastActivityAt int              `json:"last_activity_at"`
 	ContactInbox   CSC_ContactInbox `json:"contact_inbox"`
 }
 
 type CSC_Message_Sender struct {
-	Id        int    `json:"id"`
+	ID        int    `json:"id"`
 	Name      string `json:"name"`
 	AvatarUrl string `json:"avatar_url"`
 	Type      string `json:"type"`
@@ -91,7 +91,7 @@ type CSC_Meta_Sender struct {
 	AdditionalAttributes struct{} `json:"additional_attributes"`
 	CustomAttributes     struct{} `json:"custom_attributes"`
 	Email                string   `json:"email"`
-	Id                   int      `json:"id"`
+	ID                   int      `json:"id"`
 	Identifier           string   `json:"identifier"`
 	Name                 string   `json:"name"`
 	PhoneNumber          string   `json:"phone_number"`
@@ -100,7 +100,7 @@ type CSC_Meta_Sender struct {
 }
 
 type CSC_Meta_Assignee struct {
-	Id                 int    `json:"id"`
+	ID                 int    `json:"id"`
 	Name               string `json:"name"`
 	AvailableName      string `json:"available_name"`
 	AvatarUrl          string `json:"avatar_url"`
@@ -121,17 +121,17 @@ type MessageCreatedEvent struct {
 	Content              string          `json:"content"`
 	Conversation         MC_Conversation `json:"conversation"`
 	CreatedAt            string          `json:"created_at"`
-	Id                   int             `json:"id"`
+	ID                   int             `json:"id"`
 	Inbox                MC_Inbox        `json:"inbox"`
 	MessageType          string          `json:"message_type"`
 	Private              bool            `json:"private"`
 	Sender               MC_Sender       `json:"sender"`
-	SourceId             string          `json:"source_id"`
+	SourceID             string          `json:"source_id"`
 	Event                string          `json:"event"`
 }
 
 type MC_Account struct {
-	Id   int    `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -140,8 +140,8 @@ type MC_Conversation struct {
 	CanReply             bool                      `json:"can_reply"`
 	Channel              string                    `json:"channel"`
 	ContactInbox         MC_ContactInbox           `json:"contact_inbox"`
-	Id                   int                       `json:"id"`
-	InboxId              int                       `json:"inbox_id"`
+	ID                   int                       `json:"id"`
+	InboxID              int                       `json:"inbox_id"`
 	Messages             []MC_Conversation_Message `json:"messages"`
 	Labels               []struct{}                `json:"labels"`
 	Meta                 MC_Meta                   `json:"meta"`
@@ -159,10 +159,10 @@ type MC_Conversation struct {
 }
 
 type MC_ContactInbox struct {
-	Id           int    `json:"id"`
-	ContactId    int    `json:"contact_id"`
-	InboxId      int    `json:"inbox_id"`
-	SourceId     string `json:"source_id"`
+	ID           int    `json:"id"`
+	ContactID    int    `json:"contact_id"`
+	InboxID      int    `json:"inbox_id"`
+	SourceID     string `json:"source_id"`
 	CreatedAt    string `json:"created_at"`
 	UpdatedAt    string `json:"updated_at"`
 	HmacVerified bool   `json:"hmac_verified"`
@@ -170,22 +170,22 @@ type MC_ContactInbox struct {
 }
 
 type MC_Conversation_Message struct {
-	Id                      int                                  `json:"id"`
+	ID                      int                                  `json:"id"`
 	Content                 string                               `json:"content"`
-	AccountId               int                                  `json:"account_id"`
-	InboxId                 int                                  `json:"inbox_id"`
-	ConversationId          int                                  `json:"conversation_id"`
+	AccountID               int                                  `json:"account_id"`
+	InboxID                 int                                  `json:"inbox_id"`
+	ConversationID          int                                  `json:"conversation_id"`
 	MessageType             int                                  `json:"message_type"`
 	CreatedAt               int                                  `json:"created_at"`
 	UpdatedAt               string                               `json:"updated_at"`
 	Private                 bool                                 `json:"private"`
 	Status                  string                               `json:"status"`
-	SourceId                string                               `json:"source_id"`
+	SourceID                string                               `json:"source_id"`
 	ContentType             string                               `json:"content_type"`
 	ContentAttributes       struct{}                             `json:"content_attributes"`
 	SenderType              string                               `json:"sender_type"`
-	SenderId                int                                  `json:"sender_id"`
-	ExternalSourceIds       struct{}                             `json:"external_source_ids"`
+	SenderID                int                                  `json:"sender_id"`
+	ExternalSourceIDs       struct{}                             `json:"external_source_ids"`
 	AdditionalAttributes    struct{}                             `json:"additional_attributes"`
 	ProcessedMessageContent string                               `json:"processed_message_content"`
 	Sentiment               MC_Conversation_Message_Sentiment    `json:"sentiment"`
@@ -200,7 +200,7 @@ type MC_Conversation_Message_Sentiment struct {
 }
 
 type MC_Conversation_Message_Conversation struct {
-	AssigneeId     interface{}     `json:"assignee_id"`
+	AssigneeID     interface{}     `json:"assignee_id"`
 	UnreadCount    int             `json:"unread_count"`
 	LastActivityAt int             `json:"last_activity_at"`
 	ContactInbox   MC_ContactInbox `json:"contact_inbox"`
@@ -210,7 +210,7 @@ type MC_Conversation_Message_Sender struct {
 	AdditionalAttributes struct{} `json:"additional_attributes"`
 	CustomAttributes     struct{} `json:"custom_attributes"`
 	Email                string   `json:"email"`
-	Id                   int      `json:"id"`
+	ID                   int      `json:"id"`
 	Identifier           string   `json:"identifier"`
 	Name                 string   `json:"name"`
 	PhoneNumber          string   `json:"phone_number"`
@@ -229,7 +229,7 @@ type MC_Meta_Sender struct {
 	AdditionalAttributes struct{} `json:"additional_attributes"`
 	CustomAttributes     struct{} `json:"custom_attributes"`
 	Email                string   `json:"email"`
-	Id                   int      `json:"id"`
+	ID                   int      `json:"id"`
 	Identifier           string   `json:"identifier"`
 	Name                 string   `json:"name"`
 	PhoneNumber          string   `json:"phone_number"`
@@ -238,7 +238,7 @@ type MC_Meta_Sender struct {
 }
 
 type MC_Inbox struct {
-	Id   int    `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -248,7 +248,7 @@ type MC_Sender struct {
 	Avatar               string      `json:"avatar"`
 	CustomAttributes     struct{}    `json:"custom_attributes"`
 	Email                interface{} `json:"email"`
-	Id                   int         `json:"id"`
+	ID                   int         `json:"id"`
 	Identifier           interface{} `json:"identifier"`
 	Name                 string      `json:"name"`
 	PhoneNumber          interface{} `json:"phone_number"`
@@ -409,6 +409,7 @@ type AgentBot struct {
 	Description string `json:"description"`
 	AccountID   int    `json:"account_id"`
 	OutgoingURL string `json:"outgoing_url"`
+	AccessToken string `json:"access_token"`
 }
 
 type Sender struct {
@@ -795,4 +796,8 @@ type CannedResponse struct {
 	Content   string `json:"content"`
 	ShortCode string `json:"short_code"`
 	AccountID int    `json:"account_id"`
+}
+
+type WebhookEvent struct {
+	Event string `json:"event"`
 }

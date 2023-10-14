@@ -12,7 +12,7 @@ import (
 
 var HTTPClient = &http.Client{}
 
-func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string) error {
+func MessageCreatedHandler(message MessageCreatedEvent, flowiseApi string, flowiseKey string) error {
 	if message.Content == "" {
 		return nil
 	}
@@ -20,9 +20,6 @@ func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string
 		return nil
 	}
 	if message.MessageType != "incoming" {
-		return nil
-	}
-	if message.Conversation.AssigneeID != 0 {
 		return nil
 	}
 	if message.Conversation.Status == "open" {
@@ -59,7 +56,7 @@ func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string
 			return errors.New("Error assigning conversation to agent")
 		}
 
-		var respMessage Message
+		var respMessage MessageCreatedEvent
 		respMessage.MessageType = "outgoing"
 		respMessage.ContentType = "text"
 		respMessage.Private = false
@@ -84,7 +81,7 @@ func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string
 		return err
 	}
 
-	var respMessage Message
+	var respMessage MessageCreatedEvent
 	respMessage.Content = iaResp
 	respMessage.MessageType = "outgoing"
 	respMessage.ContentType = "text"
@@ -107,7 +104,7 @@ func MessageCreatedHandler(message Message, flowiseApi string, flowiseKey string
 	return nil
 }
 
-func SendTextMessage(message Message, agentBotToken string) (http.Response, error) {
+func SendTextMessage(message MessageCreatedEvent, agentBotToken string) (http.Response, error) {
 	var strAccID string = strconv.Itoa(message.Account.ID)
 	var strConvID string = strconv.Itoa(message.Conversation.ID)
 	var url string = os.Getenv("CHATWOOT_HOST") + "/api/v1/accounts/" + strAccID + "/conversations/" + strConvID + "/messages"
