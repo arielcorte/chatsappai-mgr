@@ -52,6 +52,21 @@ func WebhookHandler(c *gin.Context) {
 			fmt.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
+
+	case "conversation_status_changed":
+
+		var conversation ConversationStatusChangedEvent
+		if err := json.Unmarshal(data, &conversation); err != nil {
+			fmt.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		fmt.Println("conversation status changed", conversation.Status)
+
+		if err := ConversationStatusChangedHandler(conversation, c.Query("furl"), c.Query("fbear")); err != nil {
+			fmt.Println(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})

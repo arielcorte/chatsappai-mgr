@@ -56,21 +56,43 @@ func MessageCreatedHandler(message MessageCreatedEvent, flowiseApi string, flowi
 			return errors.New("Error assigning conversation to agent")
 		}
 
-		var respMessage MessageCreatedEvent
-		respMessage.MessageType = "outgoing"
-		respMessage.ContentType = "text"
-		respMessage.Private = false
-		respMessage.Account.ID = message.Account.ID
-		respMessage.Conversation.ID = message.Conversation.ID
-		respMessage.Content = "Tu conversación ha sido asignada a un agente.\n\nEn la brevedad se contactarán contigo para ayudarte.\n\nMuchas Gracias 😊"
-
-		respMsg, err := SendTextMessage(respMessage, agentBots[0].AccessToken)
+		busyCannedResponse, err := GetCannedResponseByShortCode("busy", strconv.Itoa(message.Account.ID))
 		if err != nil {
-			return err
+			var respMessage MessageCreatedEvent
+			respMessage.MessageType = "outgoing"
+			respMessage.ContentType = "text"
+			respMessage.Private = false
+			respMessage.Account.ID = message.Account.ID
+			respMessage.Conversation.ID = message.Conversation.ID
+			respMessage.Content = "Tu conversación ha sido asignada a un agente.\n\nEn la brevedad se contactarán contigo para ayudarte.\n\nMuchas Gracias 😊"
+
+			respMsg, new_err := SendTextMessage(respMessage, agentBots[0].AccessToken)
+			if new_err != nil {
+				return err
+			}
+
+			if respMsg.StatusCode != http.StatusOK {
+				return errors.New("Error sending message")
+			}
 		}
 
-		if respMsg.StatusCode != http.StatusOK {
-			return errors.New("Error sending message")
+		if busyCannedResponse.Content != "" {
+			var respMessage MessageCreatedEvent
+			respMessage.MessageType = "outgoing"
+			respMessage.ContentType = "text"
+			respMessage.Private = false
+			respMessage.Account.ID = message.Account.ID
+			respMessage.Conversation.ID = message.Conversation.ID
+			respMessage.Content = busyCannedResponse.Content
+
+			respMsg, new_err := SendTextMessage(respMessage, agentBots[0].AccessToken)
+			if new_err != nil {
+				return err
+			}
+
+			if respMsg.StatusCode != http.StatusOK {
+				return errors.New("Error sending message")
+			}
 		}
 
 		return nil
@@ -231,4 +253,47 @@ func ListAgentBots(accountID string) ([]AgentBot, error) {
 
 	return agentBots, nil
 
+}
+
+func ConversationStatusChangedHandler(conversation ConversationStatusChangedEvent, flowiseUrl string, flowiseKey string) error {
+	return nil
+}
+
+func GetAllCannedResponses(accountID string) ([]CannedResponse, error) {
+	req, err := http.NewRequest("GET", os.Getenv("CHATWOOT_HOST")+"/api/v1/accounts/"+accountID+"/canned_responses", nil)
+	if err != nil {
+		return []CannedResponse{}, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Add("api_access_token", os.Getenv("API_ACCESS_TOKEN"))
+
+	resp, err := HTTPClient.Do(req)
+	if err != nil {
+		return []CannedResponse{}, err
+	}
+
+	defer resp.Body.Close()
+
+	var cannedResponses []CannedResponse
+	if err := json.NewDecoder(resp.Body).Decode(&cannedResponses); err != nil {
+		return []CannedResponse{}, err
+	}
+
+	return cannedResponses, nil
+}
+
+func GetCannedResponseByShortCode(shortCode string, accountID string) (CannedResponse, error) {
+	cannedResponses, err := GetAllCannedResponses(accountID)
+	if err != nil {
+		return CannedResponse{}, err
+	}
+
+	for _, cannedResponse := range cannedResponses {
+		if cannedResponse.ShortCode == shortCode {
+			return cannedResponse, nil
+		}
+	}
+
+	return CannedResponse{}, errors.New("Canned response not found")
 }
