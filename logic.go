@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
+	"time"
 )
 
 var HTTPClient = &http.Client{}
@@ -41,6 +43,71 @@ func MessageCreatedHandler(message MessageCreatedEvent, flowiseApi string, flowi
 	if len(agentBots) == 0 {
 		fmt.Println("No agent bots found")
 		return errors.New("No agent bots found")
+	}
+
+	if message.Content == "/hour" {
+
+		loc, err := time.LoadLocation("America/Santiago")
+		if err != nil {
+			return err
+		}
+
+		now := time.Now().In(loc)
+
+		resp, err := SendTextMessage(MessageCreatedEvent{
+			MessageType:  "outgoing",
+			ContentType:  "text",
+			Private:      false,
+			Account:      message.Account,
+			Conversation: message.Conversation,
+			Content:      now.Format("15:04") + strings.ToLower(now.Weekday().String())[0:2],
+		}, agentBots[0].AccessToken)
+
+		if err != nil {
+			return err
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return errors.New("Error sending message")
+		}
+
+		return nil
+	}
+
+	if message.Content == "/isworkhour" {
+		busyCannedResponse, err := GetCannedResponseByShortCode("busy", strconv.Itoa(message.Account.ID))
+		if err != nil {
+			return err
+		}
+
+		_, busyWorkHours, found := strings.Cut(busyCannedResponse.ShortCode, " ")
+		if !found {
+			return errors.New("Error parsing work hours")
+		}
+
+		workHours, err := ParseWorkHours(busyWorkHours)
+		if err != nil {
+			return err
+		}
+
+		resp, err := SendTextMessage(MessageCreatedEvent{
+			MessageType:  "outgoing",
+			ContentType:  "text",
+			Private:      false,
+			Account:      message.Account,
+			Conversation: message.Conversation,
+			Content:      strconv.FormatBool(IsWorkHour(workHours)),
+		}, agentBots[0].AccessToken)
+
+		if err != nil {
+			return err
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return errors.New("Error sending message")
+		}
+
+		return nil
 	}
 
 	if message.Content == "/assign" || intent == "int_compra" || intent == "int_soporte" || intent == "int_devolucion" {
@@ -77,6 +144,16 @@ func MessageCreatedHandler(message MessageCreatedEvent, flowiseApi string, flowi
 		}
 
 		if busyCannedResponse.Content != "" {
+
+			cannedResponseWorkHours, err := ParseWorkHours(busyCannedResponse.ShortCode)
+			if err != nil {
+				return err
+			}
+
+			if IsWorkHour(cannedResponseWorkHours) {
+				return nil
+			}
+
 			var respMessage MessageCreatedEvent
 			respMessage.MessageType = "outgoing"
 			respMessage.ContentType = "text"
@@ -290,10 +367,134 @@ func GetCannedResponseByShortCode(shortCode string, accountID string) (CannedRes
 	}
 
 	for _, cannedResponse := range cannedResponses {
-		if cannedResponse.ShortCode == shortCode {
+		if strings.HasPrefix(cannedResponse.ShortCode, shortCode) {
 			return cannedResponse, nil
 		}
 	}
 
 	return CannedResponse{}, errors.New("Canned response not found")
+}
+
+func ParseWorkHours(busyWorkHours string) ([]WorkHours, error) {
+
+	weekMap := map[string]int{
+		"mo": 0,
+		"tu": 1,
+		"we": 2,
+		"th": 3,
+		"fr": 4,
+		"sa": 5,
+		"su": 6,
+	}
+
+	weekArray := [7]string{
+		"mo",
+		"tu",
+		"we",
+		"th",
+		"fr",
+		"sa",
+		"su",
+	}
+
+	//busyWorkHours format: Mo-Fr:09:00-17:00;Sa-Su:10:00-14:00
+
+	loc, err := time.LoadLocation("America/Santiago")
+	if err != nil {
+		return []WorkHours{}, err
+	}
+
+	dayHourPairs := strings.Split(busyWorkHours, ";")
+
+	var workHours []WorkHours
+
+	for _, pair := range dayHourPairs {
+		day, hour, found := strings.Cut(pair, ":")
+
+		if !found {
+			return []WorkHours{}, errors.New("Error parsing work hours")
+		}
+
+		startHour, endHour, foundHours := strings.Cut(hour, "-")
+		if !foundHours {
+			return []WorkHours{}, errors.New("Error parsing work hours")
+		}
+
+		start, err := time.ParseInLocation("15:04", startHour, loc)
+		if err != nil {
+			return []WorkHours{}, err
+		}
+
+		end, err := time.ParseInLocation("15:04", endHour, loc)
+		if err != nil {
+			return []WorkHours{}, err
+		}
+
+		startDay, endDay, foundDays := strings.Cut(day, "-")
+
+		if foundDays {
+			if weekMap[startDay] > weekMap[endDay] {
+				return []WorkHours{}, errors.New("Error parsing work days")
+			}
+
+			for i := weekMap[startDay]; i <= weekMap[endDay]; i++ {
+				workHours = append(workHours, WorkHours{
+					Day:   weekArray[i],
+					Start: start,
+					End:   end,
+				})
+			}
+		}
+
+		if !foundDays {
+			workHours = append(workHours, WorkHours{
+				Day:   day,
+				Start: start,
+				End:   end,
+			})
+		}
+	}
+
+	//remove duplicate days
+
+	var uniqueWorkHours []WorkHours
+
+	for _, workHour := range workHours {
+		found := false
+		for _, uniqueWorkHour := range uniqueWorkHours {
+			if uniqueWorkHour.Day == workHour.Day {
+				found = true
+			}
+		}
+		if !found {
+			uniqueWorkHours = append(uniqueWorkHours, workHour)
+		}
+	}
+
+	return uniqueWorkHours, nil
+
+}
+
+func IsWorkHour(workHours []WorkHours) bool {
+	loc, err := time.LoadLocation("America/Santiago")
+	if err != nil {
+		return false
+	}
+
+	now := time.Now().In(loc)
+
+	for _, workHour := range workHours {
+		fmt.Println("day", workHour.Day)
+		if workHour.Day == strings.ToLower(now.Weekday().String())[0:2] {
+			newStart := time.Date(now.Year(), now.Month(), now.Day(), workHour.Start.Hour(), workHour.Start.Minute(), 0, 0, loc)
+			newEnd := time.Date(now.Year(), now.Month(), now.Day(), workHour.End.Hour(), workHour.End.Minute(), 0, 0, loc)
+			fmt.Println(newStart, "|", now, "|", newEnd)
+			fmt.Println(now.After(newStart), now.Before(newEnd))
+			if now.After(newStart) && now.Before(newEnd) {
+				return true
+			}
+		}
+	}
+
+	return false
 }

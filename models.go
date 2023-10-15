@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 // -- WEBHOOKS
 
 // -- conversation_status_changed
@@ -800,4 +802,10 @@ type CannedResponse struct {
 
 type WebhookEvent struct {
 	Event string `json:"event"`
+}
+
+type WorkHours struct {
+	Day   string    `json:"day"`
+	Start time.Time `json:"start"`
+	End   time.Time `json:"end"`
 }
