@@ -25,7 +25,19 @@ func MessageCreatedHandler(message MessageCreatedEvent, flowiseApi string, flowi
 		return nil
 	}
 	if message.Conversation.Status == "open" {
-		return nil
+		for _, label := range message.Conversation.Labels {
+			if label == "bot" {
+				return nil
+			}
+			if label == "manual" {
+				return nil
+			}
+		}
+	}
+	for _, label := range message.Conversation.Labels {
+		if label == "bot" {
+			return nil
+		}
 	}
 
 	intent, err := PredictIntentionFlowise(message.Content)
@@ -66,7 +78,6 @@ func MessageCreatedHandler(message MessageCreatedEvent, flowiseApi string, flowi
 		if err != nil {
 			return err
 		}
-
 		if resp.StatusCode != http.StatusOK {
 			return errors.New("Error sending message")
 		}
@@ -90,13 +101,15 @@ func MessageCreatedHandler(message MessageCreatedEvent, flowiseApi string, flowi
 			return err
 		}
 
+		isWorkHour, diff := IsWorkHour(workHours)
+
 		resp, err := SendTextMessage(MessageCreatedEvent{
 			MessageType:  "outgoing",
 			ContentType:  "text",
 			Private:      false,
 			Account:      message.Account,
 			Conversation: message.Conversation,
-			Content:      strconv.FormatBool(IsWorkHour(workHours)),
+			Content:      strconv.FormatBool(isWorkHour) + " " + diff.String(),
 		}, agentBots[0].AccessToken)
 
 		if err != nil {
@@ -150,7 +163,45 @@ func MessageCreatedHandler(message MessageCreatedEvent, flowiseApi string, flowi
 				return err
 			}
 
-			if IsWorkHour(cannedResponseWorkHours) {
+			isWorkHour, diff := IsWorkHour(cannedResponseWorkHours)
+
+			if isWorkHour {
+				var respMessage MessageCreatedEvent
+				respMessage.MessageType = "outgoing"
+				respMessage.ContentType = "text"
+				respMessage.Private = false
+				respMessage.Account.ID = message.Account.ID
+				respMessage.Conversation.ID = message.Conversation.ID
+				if diff <= time.Duration(45*time.Minute) {
+					busyWarn, err := GetCannedResponseByShortCode("busy-warn", strconv.Itoa(message.Account.ID))
+					if err != nil {
+						return err
+					}
+					if busyWarn.Content == "" {
+						respMessage.Content = busyWarn.Content
+					}
+				} else {
+					busyWait, err := GetCannedResponseByShortCode("busy-wait", strconv.Itoa(message.Account.ID))
+					if err != nil {
+						return err
+					}
+					if busyWait.Content == "" {
+						respMessage.Content = busyWait.Content
+					}
+				}
+
+				if respMessage.Content == "" {
+					return errors.New("Error sending message")
+				}
+				respMsg, new_err := SendTextMessage(respMessage, agentBots[0].AccessToken)
+				if new_err != nil {
+					return err
+				}
+
+				if respMsg.StatusCode != http.StatusOK {
+					return errors.New("Error sending message")
+				}
+
 				return nil
 			}
 
@@ -378,26 +429,43 @@ func GetCannedResponseByShortCode(shortCode string, accountID string) (CannedRes
 func ParseWorkHours(busyWorkHours string) ([]WorkHours, error) {
 
 	weekMap := map[string]int{
-		"mo": 0,
-		"tu": 1,
-		"we": 2,
-		"th": 3,
-		"fr": 4,
-		"sa": 5,
-		"su": 6,
+		"mon": 0,
+		"tue": 1,
+		"wed": 2,
+		"thu": 3,
+		"fri": 4,
+		"sat": 5,
+		"sun": 6,
 	}
 
 	weekArray := [7]string{
-		"mo",
-		"tu",
-		"we",
-		"th",
-		"fr",
-		"sa",
-		"su",
+		"mon",
+		"tue",
+		"wed",
+		"thu",
+		"fri",
+		"sat",
+		"sun",
 	}
 
-	//busyWorkHours format: Mo-Fr:09:00-17:00;Sa-Su:10:00-14:00
+	englishToSpanish := map[string]string{
+		"mon": "lun",
+		"tue": "mar",
+		"wed": "mie",
+		"thu": "jue",
+		"fri": "vie",
+		"sat": "sab",
+		"sun": "dom",
+	}
+
+	//busyWorkHours format: "busy Mo-Fr:09:00-17:00;Sa-Su:10:00-14:00"
+
+	//translate spanish to english
+	for key, value := range englishToSpanish {
+		busyWorkHours = strings.ReplaceAll(busyWorkHours, value, key)
+	}
+
+	fmt.Println(busyWorkHours)
 
 	loc, err := time.LoadLocation("America/Santiago")
 	if err != nil {
@@ -475,26 +543,26 @@ func ParseWorkHours(busyWorkHours string) ([]WorkHours, error) {
 
 }
 
-func IsWorkHour(workHours []WorkHours) bool {
+func IsWorkHour(workHours []WorkHours) (bool, time.Duration) {
 	loc, err := time.LoadLocation("America/Santiago")
 	if err != nil {
-		return false
+		return false, 0
 	}
 
 	now := time.Now().In(loc)
 
 	for _, workHour := range workHours {
 		fmt.Println("day", workHour.Day)
-		if workHour.Day == strings.ToLower(now.Weekday().String())[0:2] {
+		if workHour.Day == strings.ToLower(now.Weekday().String())[0:len(workHour.Day)] {
 			newStart := time.Date(now.Year(), now.Month(), now.Day(), workHour.Start.Hour(), workHour.Start.Minute(), 0, 0, loc)
 			newEnd := time.Date(now.Year(), now.Month(), now.Day(), workHour.End.Hour(), workHour.End.Minute(), 0, 0, loc)
 			fmt.Println(newStart, "|", now, "|", newEnd)
 			fmt.Println(now.After(newStart), now.Before(newEnd))
 			if now.After(newStart) && now.Before(newEnd) {
-				return true
+				return true, newEnd.Sub(now).Truncate(time.Minute)
 			}
 		}
 	}
 
-	return false
+	return false, 0
 }

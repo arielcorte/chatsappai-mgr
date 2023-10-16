@@ -16,7 +16,7 @@ type ConversationStatusChangedEvent struct {
 	ID                   int              `json:"id"`
 	InboxID              int              `json:"inbox_id"`
 	Messages             []CSC_Message    `json:"messages"`
-	Labels               []struct{}       `json:"labels"`
+	Labels               []string         `json:"labels"`
 	Meta                 CSC_Meta         `json:"meta"`
 	Status               string           `json:"status"`
 	CustomAttributes     struct{}         `json:"custom_attributes"`
@@ -145,7 +145,7 @@ type MC_Conversation struct {
 	ID                   int                       `json:"id"`
 	InboxID              int                       `json:"inbox_id"`
 	Messages             []MC_Conversation_Message `json:"messages"`
-	Labels               []struct{}                `json:"labels"`
+	Labels               []string                  `json:"labels"`
 	Meta                 MC_Meta                   `json:"meta"`
 	Status               string                    `json:"status"`
 	CustomAttributes     struct{}                  `json:"custom_attributes"`
