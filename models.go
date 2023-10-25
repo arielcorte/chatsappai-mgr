@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 // -- WEBHOOKS
 
 // -- conversation_status_changed
@@ -14,7 +16,7 @@ type ConversationStatusChangedEvent struct {
 	ID                   int              `json:"id"`
 	InboxID              int              `json:"inbox_id"`
 	Messages             []CSC_Message    `json:"messages"`
-	Labels               []struct{}       `json:"labels"`
+	Labels               []string         `json:"labels"`
 	Meta                 CSC_Meta         `json:"meta"`
 	Status               string           `json:"status"`
 	CustomAttributes     struct{}         `json:"custom_attributes"`
@@ -143,7 +145,7 @@ type MC_Conversation struct {
 	ID                   int                       `json:"id"`
 	InboxID              int                       `json:"inbox_id"`
 	Messages             []MC_Conversation_Message `json:"messages"`
-	Labels               []struct{}                `json:"labels"`
+	Labels               []string                  `json:"labels"`
 	Meta                 MC_Meta                   `json:"meta"`
 	Status               string                    `json:"status"`
 	CustomAttributes     struct{}                  `json:"custom_attributes"`
@@ -800,4 +802,10 @@ type CannedResponse struct {
 
 type WebhookEvent struct {
 	Event string `json:"event"`
+}
+
+type WorkHours struct {
+	Day   string    `json:"day"`
+	Start time.Time `json:"start"`
+	End   time.Time `json:"end"`
 }
