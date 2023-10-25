@@ -144,7 +144,12 @@ func MessageCreatedHandler(message MessageCreatedEvent, flowiseApi string, flowi
 			respMessage.Private = false
 			respMessage.Account.ID = message.Account.ID
 			respMessage.Conversation.ID = message.Conversation.ID
-			respMessage.Content = "Tu conversación ha sido asignada a un agente.\n\nEn la brevedad se contactarán contigo para ayudarte.\n\nMuchas Gracias 😊"
+			busyWait, err := GetCannedResponseByShortCode("busy-wait", strconv.Itoa(message.Account.ID))
+			if err != nil || busyWait.Content == "" {
+				respMessage.Content = "Tu conversación ha sido asignada a un agente.\n\nEn la brevedad se contactarán contigo para ayudarte.\n\nMuchas Gracias 😊"
+			} else {
+				respMessage.Content = busyWait.Content
+			}
 
 			respMsg, new_err := SendTextMessage(respMessage, agentBots[0].AccessToken)
 			if new_err != nil {
